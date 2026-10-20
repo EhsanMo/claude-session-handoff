@@ -249,6 +249,11 @@ each session's last assistant turn, which is the window it ended with.
 - Transcript text from each session is sent to the Claude model, through a
   nested `claude -p` call, to produce the summary. This happens on every session
   that passes the tool-call gate.
+- The plugin runs code on your machine without asking. Its SessionStart and
+  SessionEnd hooks are shell scripts, and SessionEnd launches the nested
+  `claude -p` call above. Plugin screens that list capabilities, such as the
+  claude.ai plugin page, show this as "Can run code without asking". The scripts
+  are in `hooks/` and `scripts/` and are short enough to read before installing.
 - Before it is sent, the transcript text is passed through best-effort regex
   scrubbing, and the summary is scrubbed again before it is written. Each
   match becomes `[REDACTED]`; line structure is kept. The rules:
