@@ -131,7 +131,7 @@ carry_claim_forward() {
 }
 
 # Trivial/empty session: nothing worth logging.
-line_count="$(printf '%s' "$transcript_excerpt" | grep -c . )"
+line_count="$(printf '%s' "$transcript_excerpt" | grep -c -v '^$' )"
 [ "${line_count:-0}" -ge 2 ] || { carry_claim_forward; clear_claim; exit 0; }
 
 # A session that never picked up a tool did no work worth handing off, and the
@@ -159,7 +159,7 @@ if [ -z "$claimed_note" ]; then
   ' "$transcript_path" 2>/dev/null)"
   jq_status=$?
   if [ "$jq_status" -eq 0 ]; then
-    tool_calls="$(printf '%s' "$tool_names" | grep -c . )"
+    tool_calls="$(printf '%s' "$tool_names" | grep -c -v '^$' )"
     [ "${tool_calls:-0}" -ge "$min_tool_calls" ] || { clear_claim; exit 0; }
   fi
 fi
