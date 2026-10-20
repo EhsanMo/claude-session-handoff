@@ -1,4 +1,4 @@
-# session-handoff
+# session-handoff-auto
 
 [![tests](https://github.com/EhsanMo/claude-session-handoff/actions/workflows/test.yml/badge.svg)](https://github.com/EhsanMo/claude-session-handoff/actions/workflows/test.yml)
 
@@ -126,11 +126,11 @@ handoffs written within the same second cannot be resolved.
 
 ```
 /plugin marketplace add EhsanMo/claude-session-handoff
-/plugin install session-handoff@session-handoff
+/plugin install session-handoff-auto@session-handoff
 ```
 
 The first command takes this repository, which contains
-`.claude-plugin/marketplace.json`. `session-handoff` is the marketplace name.
+`.claude-plugin/marketplace.json`. `session-handoff` is the marketplace name and `session-handoff-auto` the plugin name.
 
 If you already have your own `SessionStart`/`SessionEnd` hooks that run these
 scripts, remove them. Running both makes every session write and resume twice.
@@ -301,7 +301,7 @@ each session's last assistant turn, which is the window it ended with.
 
 To stop everything without uninstalling, set `SESSION_HANDOFF_DISABLE=1` in
 the environment the hooks run in. That turns both hooks off completely.
-Uninstalling is `/plugin uninstall session-handoff`, or disabling the plugin in
+Uninstalling is `/plugin uninstall session-handoff-auto`, or disabling the plugin in
 `/plugin`.
 
 To reduce how many summaries are written rather than stop them all, raise

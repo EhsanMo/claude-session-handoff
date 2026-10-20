@@ -1,6 +1,6 @@
 {
-  "name": "session-handoff",
-  "displayName": "Session Handoff",
+  "name": "session-handoff-auto",
+  "displayName": "Session Handoff Auto",
   "version": "0.1.0",
   "description": "Carries context between Claude Code sessions: summarizes each session on close and hands the note to the next session started in the same repo",
   "author": { "name": "Ehsan Moradi" },
