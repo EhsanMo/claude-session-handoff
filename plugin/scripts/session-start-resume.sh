@@ -85,7 +85,7 @@ retire_older() { # $1 = mtime of the claimed handoff, $2 = its path
 # exist to make visible. The claimed handoff is excluded by path, because its
 # digest is not in the ledger yet at call time, so a digest check would miss it.
 pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
-  local ts file dir od closed branch summary shown
+  local ts file dir od closed branch summary shown line
   while IFS="$(printf '\t')" read -r ts file; do
     [ -n "$file" ] || continue
     [ "$file" = "$2" ] && continue
@@ -99,12 +99,21 @@ pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
     od="$(handoff_sha1 "$file")"
     [ -n "$od" ] || continue
     grep -qxF "$od" "$dir/.consumed" 2>/dev/null && continue
-    closed="$(sed -n 's/^<!-- closed: \(.*\) -->$/\1/p' "$file" 2>/dev/null | head -1)"
-    # Branch names can run to 100+ chars; the front of the name is the only
-    # part worth a list line.
-    branch="$(sed -n 's/^<!-- branch: \(.*\) -->$/\1/p' "$file" 2>/dev/null | head -1 | cut -c1-32)"
-    summary="$(sed -e '/^<!--/d' -e '/^[[:space:]]*$/d' "$file" 2>/dev/null \
-      | head -1 | tr -d '*' | cut -c1-110)"
+    # The header comments and the first line of prose, read in bash. Branch
+    # names can run to 100+ chars; the front of the name is the only part worth
+    # a list line.
+    closed="" branch="" summary=""
+    while IFS= read -r line; do
+      case "$line" in
+        "<!-- closed: "*" -->") [ -n "$closed" ] || { closed="${line#"<!-- closed: "}"; closed="${closed%" -->"}"; } ;;
+        "<!-- branch: "*" -->") [ -n "$branch" ] || { branch="${line#"<!-- branch: "}"; branch="${branch%" -->"}"; } ;;
+        "<!--"*) ;;
+        *[![:space:]]*) [ -n "$summary" ] || summary="$line" ;;
+      esac
+    done 2>/dev/null < "$file"
+    branch="${branch:0:32}"
+    summary="${summary//\*/}"
+    summary="${summary:0:110}"
     # Plain case, not ${file/#"$HOME"/\~}: bash 3.2 (macOS /bin/bash) keeps the
     # backslash in a pattern-substitution replacement, so the path printed as "\~/".
     shown="$file"
