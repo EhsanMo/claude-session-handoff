@@ -13,7 +13,8 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SCRIPTS="$HERE/../plugin/scripts"
+export CLAUDE_PLUGIN_ROOT="$(cd "$HERE/../plugin" && pwd)"
+SCRIPTS="$CLAUDE_PLUGIN_ROOT/scripts"
 HOOK="$SCRIPTS/session-end-log.sh"
 START_HOOK="$SCRIPTS/session-start-resume.sh"
 tmp="$(mktemp -d)"
@@ -262,11 +263,14 @@ back="$tmp/work/backlog"
 mkdir -p "$back"
 handoff_slugs "$back"
 bdir="$HOME/.claude/session-log/$HANDOFF_SLUG"
+sec=0
 for m in III JJJ KKK; do
   mk_transcript "$tmp/t-$m.jsonl" "MARKER-$m"
   printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-%s"}' "$tmp/t-$m.jsonl" "$back" "$m" \
     | "$HOOK" >/dev/null 2>&1
-  touch "$bdir/sess-$m.md"
+  # Distinct stamps: three touches inside one second tie on BSD stat.
+  sec=$((sec + 1))
+  stamp "$(date +%Y-%m-%d) 00:00:0$sec" "$bdir/sess-$m.md"
 done
 b1="$(printf '{"cwd":"%s","source":"startup"}' "$back" | "$START_HOOK" 2>/dev/null \
   | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"

@@ -25,7 +25,7 @@ umask 077
 set -uo pipefail
 
 # shellcheck source=session-log-common.sh
-. "$(dirname "${BASH_SOURCE[0]:-$0}")/session-log-common.sh" 2>/dev/null || exit 0
+. "${CLAUDE_PLUGIN_ROOT}/scripts/session-log-common.sh" 2>/dev/null || exit 0
 
 # Hooks never block: without the tools this hook needs, do nothing.
 command -v jq >/dev/null 2>&1 || exit 0
