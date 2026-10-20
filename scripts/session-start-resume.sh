@@ -87,7 +87,7 @@ CAND
 # exist to make visible. The claimed handoff is excluded by path, because its
 # digest is not in the ledger yet at call time, so a digest check would miss it.
 pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
-  local ts file dir od closed branch summary
+  local ts file dir od closed branch summary shown
   while IFS="$(printf '\t')" read -r ts file; do
     [ -n "$file" ] || continue
     [ "$file" = "$2" ] && continue
@@ -107,9 +107,13 @@ pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
     branch="$(sed -n 's/^<!-- branch: \(.*\) -->$/\1/p' "$file" 2>/dev/null | head -1 | cut -c1-32)"
     summary="$(sed -e '/^<!--/d' -e '/^[[:space:]]*$/d' "$file" 2>/dev/null \
       | head -1 | tr -d '*' | cut -c1-110)"
+    # Plain case, not ${file/#"$HOME"/\~}: bash 3.2 (macOS /bin/bash) keeps the
+    # backslash in a pattern-substitution replacement, so the path printed as "\~/".
+    shown="$file"
+    case "$file" in "$HOME"/*) shown="~${file#"$HOME"}" ;; esac
     printf -- '- %s  [%s]\n  %s\n  %s\n' \
       "${closed:-date unknown}" "${branch:-no branch}" "${summary:-(no summary)}" \
-      "${file/#"$HOME"/\~}"
+      "$shown"
   done <<CAND
 $candidates
 CAND

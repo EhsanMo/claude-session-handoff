@@ -210,6 +210,40 @@ benchmark.
   SessionEnd. The summarizer call defaults to `SESSION_HANDOFF_SUMMARY_TIMEOUT`
   (45 s) and is clamped to 50 s, inside the SessionEnd limit.
 
+### Token and session-length impact
+
+Aggregate statistics from one workstation's Claude Code transcripts (2,515
+session files, of which 1,345 had 5 or more tool calls; N = 1,345). Sizes are
+file bytes. Context is the input plus cache-read plus cache-creation tokens of
+each session's last assistant turn, which is the window it ended with.
+
+| Sessions with 5+ tool calls | Median | p90 | Max |
+|---|---|---|---|
+| Transcript size | 988 KB | 3,495 KB | 96,860 KB |
+| Assistant turns | 45 | 143 | 851 |
+| Context at end (tokens) | 135,393 | 189,750 | 222,516 |
+
+- **Long sessions are the norm.** 83.7% of these sessions (1,126 of 1,345) ended
+  above 100k context tokens.
+- **Handoff note vs. carrying the session forward (estimate).** The note is
+  about 280 tokens (1,123 bytes / 4). The median session ended at about 135,400
+  tokens, so the note is roughly 480x smaller (135,393 / 280 = 484). At p90 the
+  ratio is about 680x (189,750 / 280 = 678).
+- **Saving per resumed session (estimate, upper bound).** Median:
+  135,393 - 280 = about 135,100 tokens. At p90: about 189,500 tokens. This is an
+  upper bound because a fresh session also carries the base prompt, and cached
+  reads are billed at a lower rate than fresh input.
+- **Summarizer break-even (estimate).** Each summarized session costs about
+  3,650 input tokens once, at SessionEnd. One resumed session saves about
+  135,100 / 3,650 = 37 summarizer calls' worth of input. A summary pays for
+  itself if roughly one in 37 summarized sessions is resumed from its handoff.
+- **Session length.** Because a handoff restores the essentials in about 280
+  tokens, the user can `/clear` and restart cheaply instead of continuing a
+  window that is often above 100k tokens. The 14 KB excerpt cap keeps SessionEnd
+  time flat at about 9 s (see the table above) however large the transcript is.
+- This is an estimate of potential saving drawn from transcript statistics, not
+  a measured A/B test.
+
 ## Privacy
 
 - Transcript text from each session is sent to the Claude model, through a

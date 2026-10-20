@@ -21,6 +21,12 @@ trap 'rm -rf "$tmp"' EXIT
 fail=0
 ok()   { printf '  ok   %s\n' "$1"; }
 bad()  { printf '  FAIL %s\n' "$1"; fail=1; }
+# BSD touch has no -d with dates or relative phrases ("30 days ago" is GNU-only),
+# so stamp mtimes with -t CCYYMMDDhhmm[.ss], which both touch flavours accept.
+stamp() { # $1 = "YYYY-MM-DD hh:mm:ss", rest = files
+  local digits; digits="$(printf '%s' "$1" | tr -dc '0-9')"; shift
+  touch -t "$(printf '%s' "$digits" | cut -c1-12).$(printf '%s' "$digits" | cut -c13-14)" "$@"
+}
 
 # Stub `claude` so the hook never calls the real summarizer.
 mkdir -p "$tmp/bin"
@@ -163,7 +169,7 @@ empty_out="$(printf '{"cwd":"%s","source":"startup"}' "$tmp/work/otherproj" | "$
 # 11. A stale handoff is not resurrected (clear the consumed ledger first, so
 #     age is what rejects it rather than the dedup check).
 rm -f "$dir/.consumed" 2>/dev/null
-touch -d '30 days ago' "$dir"/*.md 2>/dev/null
+stamp '2020-01-01 00:00:00' "$dir"/*.md 2>/dev/null
 stale_out="$(start_payload | "$START_HOOK" 2>/dev/null)"
 [ -z "$stale_out" ] && ok "stale handoff skipped" || bad "stale handoff skipped"
 
@@ -174,7 +180,9 @@ for i in 1 2 3 4; do
   start_payload | SESSION_HANDOFF_CLAIM_DELAY=0.3 "$START_HOOK" > "$tmp/start.$i" 2>/dev/null &
 done
 wait
-claimed="$(grep -lc . "$tmp"/start.[1-4] 2>/dev/null | wc -l)"
+# grep -lc is not portable: BSD grep prints a count line per file as well as the
+# filename, so the count was 5 on macOS. -l alone lists only the matching files.
+claimed="$(grep -l . "$tmp"/start.[1-4] 2>/dev/null | wc -l | tr -d ' ')"
 [ "$claimed" = "1" ] && ok "concurrent starts claim the handoff once" \
   || bad "concurrent starts claim the handoff once (got $claimed)"
 d_digest="$(handoff_sha1 "$dir/sess-ddd.md")"
@@ -310,7 +318,7 @@ for m in NNN OOO; do
   printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-%s"}' "$tmp/t-$m.jsonl" "$tie" "$m" \
     | "$HOOK" >/dev/null 2>&1
 done
-touch -d '2026-01-02 03:04:05' "$tdir/sess-NNN.md" "$tdir/sess-OOO.md" 2>/dev/null
+stamp '2026-01-02 03:04:05' "$tdir/sess-NNN.md" "$tdir/sess-OOO.md" 2>/dev/null
 rm -f "$tdir/.consumed" 2>/dev/null
 t1="$(printf '{"cwd":"%s","source":"startup"}' "$tie" | SESSION_HANDOFF_MAX_AGE_DAYS=99999 "$START_HOOK" 2>/dev/null \
   | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"
@@ -331,9 +339,9 @@ for m in PPP QQQ RRR; do
   printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-%s"}' "$tmp/t-$m.jsonl" "$lst" "$m" \
     | "$HOOK" >/dev/null 2>&1
 done
-touch -d '2026-01-01 01:00:00' "$ldir/sess-PPP.md" \
-  && touch -d '2026-01-01 02:00:00' "$ldir/sess-QQQ.md" \
-  && touch -d '2026-01-01 03:00:00' "$ldir/sess-RRR.md" \
+stamp '2026-01-01 01:00:00' "$ldir/sess-PPP.md" \
+  && stamp '2026-01-01 02:00:00' "$ldir/sess-QQQ.md" \
+  && stamp '2026-01-01 03:00:00' "$ldir/sess-RRR.md" \
   || bad "could not stamp listing fixtures (later assertions are meaningless)"
 rm -f "$ldir/.consumed" 2>/dev/null
 lout="$(printf '{"cwd":"%s","source":"startup"}' "$lst" | SESSION_HANDOFF_MAX_AGE_DAYS=99999 "$START_HOOK" 2>/dev/null \
@@ -369,7 +377,7 @@ for m in TTT UUU; do
   printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-%s"}' "$tmp/t-$m.jsonl" "$tie2" "$m" \
     | "$HOOK" >/dev/null 2>&1
 done
-touch -d '2026-02-02 02:00:00' "$t2dir/sess-TTT.md" "$t2dir/sess-UUU.md" 2>/dev/null
+stamp '2026-02-02 02:00:00' "$t2dir/sess-TTT.md" "$t2dir/sess-UUU.md" 2>/dev/null
 rm -f "$t2dir/.consumed" 2>/dev/null
 tie_out="$(printf '{"cwd":"%s","source":"startup"}' "$tie2" | SESSION_HANDOFF_MAX_AGE_DAYS=99999 "$START_HOOK" 2>/dev/null \
   | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"
@@ -909,7 +917,7 @@ L="$tmp/lock-trap"
 #     not waited out for the full bound (5s here).
 S="$tmp/lock-stale"
 mkdir "$S.d"
-touch -d '5 minutes ago' "$S.d"
+stamp '2020-01-01 00:00:00' "$S.d"
 t0="$(date +%s)"
 ( trap - EXIT; PATH="$nof"; . "$SCRIPTS/session-log-common.sh"; handoff_with_lock "$S" 5 true ) >/dev/null 2>&1
 el=$(( $(date +%s) - t0 ))
