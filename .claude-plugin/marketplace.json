@@ -1,0 +1,14 @@
+{
+  "name": "session-handoff",
+  "owner": { "name": "Ehsan Moradi" },
+  "description": "Session handoff plugin for Claude Code",
+  "plugins": [
+    {
+      "name": "session-handoff",
+      "source": "./",
+      "description": "Carries context between Claude Code sessions: summarizes each session on close and hands the note to the next session started in the same repo",
+      "version": "0.1.0",
+      "category": "productivity"
+    }
+  ]
+}
