@@ -631,29 +631,29 @@ scrub_is 'use github_''pat_EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitHub fine-grained github_pat_ token"
 scrub_is 'use gl''pat-EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitLab glpat- token"
-scrub_is 'Authorization: Bearer abc.def-ghi_123=' 'Authorization: Bearer [REDACTED]' \
+scrub_is 'Authorization: Bearer EXAMPLE.token_1=' 'Authorization: Bearer [REDACTED]' \
   "scrub: Bearer token"
 scrub_is 'jwt ey''JEXAMPLE.ey''JEXAMPLE.EXAMPLE end' \
   'jwt [REDACTED] end' "scrub: JWT"
 scrub_is 'password=EXAMPLEEXAMPLE' 'password=[REDACTED]' \
   "scrub: password=value"
-scrub_is '{"api_key": "abc123xyz"}' '{"api_key": "[REDACTED]"}' \
+scrub_is '{"api_key": "EXAMPLE1"}' '{"api_key": "[REDACTED]"}' \
   "scrub: JSON api_key value"
-scrub_is 'SECRET: topsecretvalue' 'SECRET: [REDACTED]' \
+scrub_is 'SECRET: EXAMPLEvalue' 'SECRET: [REDACTED]' \
   "scrub: SECRET: value (case-insensitive key)"
-scrub_is 'Token=abcd1234' 'Token=[REDACTED]' \
+scrub_is 'Token=EXAMPLE1' 'Token=[REDACTED]' \
   "scrub: Token=value"
-scrub_is 'api-key: xyz789abc' 'api-key: [REDACTED]' \
+scrub_is 'api-key: EXAMPLE78' 'api-key: [REDACTED]' \
   "scrub: api-key: value"
-scrub_is 'aws_secret_access_key=abcd1234efgh' 'aws_secret_access_key=[REDACTED]' \
+scrub_is 'aws_secret_access_key=EXAMPLE1234' 'aws_secret_access_key=[REDACTED]' \
   "scrub: keyword with a suffix (aws_secret_access_key=)"
-scrub_is 'SECRET_KEY=xyz987' 'SECRET_KEY=[REDACTED]' \
+scrub_is 'SECRET_KEY=EXAMPLE9' 'SECRET_KEY=[REDACTED]' \
   "scrub: SECRET_KEY= value"
 scrub_is 'PRIVATE_KEY=abc' 'PRIVATE_KEY=[REDACTED]' \
   "scrub: PRIVATE_KEY= value"
-scrub_is 'pwd=hunter' 'pwd=[REDACTED]' "scrub: pwd= value"
-scrub_is 'db credentials: s3cr3t' 'db credentials: [REDACTED]' "scrub: credentials: value"
-scrub_is '"password": "correct horse battery"' '"password": "[REDACTED]"' \
+scrub_is 'pwd=EXAMPLE' 'pwd=[REDACTED]' "scrub: pwd= value"
+scrub_is 'db credentials: EXAMPLE' 'db credentials: [REDACTED]' "scrub: credentials: value"
+scrub_is '"password": "EXAMPLE EXAMPLE"' '"password": "[REDACTED]"' \
   "scrub: quoted value redacted up to the closing quote"
 scrub_is "'token': 'abc def'" "'token': '[REDACTED]'" \
   "scrub: single-quoted value redacted up to the closing quote"
@@ -681,15 +681,15 @@ pem_open_want="$(printf 'before\n[REDACTED]')"
 pem_open_got="$(printf '%s\n' "$pem_open" | handoff_scrub)"
 [ "$pem_open_got" = "$pem_open_want" ] && ok "scrub: unterminated PEM redacted to EOF" \
   || bad "scrub: unterminated PEM redacted to EOF (got: $pem_open_got)"
-scrub_is 'Authorization: token abcd1234efgh' 'Authorization: token [REDACTED]' \
+scrub_is 'Authorization: token EXAMPLE1234' 'Authorization: token [REDACTED]' \
   "scrub: Authorization: token value"
 scrub_is 'AWS_SECRET_ACCESS_KEY abc123def456' 'AWS_SECRET_ACCESS_KEY [REDACTED]' \
   "scrub: keyword followed by a whitespace-separated value"
-scrub_is 'DB_PASS=hunter22' 'DB_PASS=[REDACTED]' "scrub: bare pass after an underscore still redacted"
-scrub_is 'PassWord=hunter2x' 'PassWord=[REDACTED]' "scrub: mixed-case keyword (no sed I flag)"
+scrub_is 'DB_PASS=EXAMPLE2' 'DB_PASS=[REDACTED]' "scrub: bare pass after an underscore still redacted"
+scrub_is 'PassWord=EXAMPLEx' 'PassWord=[REDACTED]' "scrub: mixed-case keyword (no sed I flag)"
 scrub_is 'Tests passed: 14' 'Tests passed: 14' "scrub: 'passed:' is not a credential"
 scrub_is 'bypass=on' 'bypass=[REDACTED]' "scrub: 'bypass=' over-redacted (accepted)"
-scrub_is 'dbpass=s3cr3t' 'dbpass=[REDACTED]' "scrub: dbpass= (pass after a letter)"
+scrub_is 'dbpass=EXAMPLE' 'dbpass=[REDACTED]' "scrub: dbpass= (pass after a letter)"
 scrub_is 'mypass=x' 'mypass=[REDACTED]' "scrub: mypass= (pass after a letter)"
 scrub_is 'passphrase=x' 'passphrase=[REDACTED]' "scrub: passphrase="
 scrub_is 'PASSPHRASE: x' 'PASSPHRASE: [REDACTED]' "scrub: PASSPHRASE: (mixed case)"
