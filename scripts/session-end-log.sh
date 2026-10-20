@@ -210,7 +210,7 @@ case "$summarizer_timeout" in ''|*[!0-9]*) summarizer_timeout=45;; esac
 # harness never kills the hook before its own fallback runs.
 [ "$summarizer_timeout" -le 50 ] || summarizer_timeout=50
 summarizer_model="${SESSION_HANDOFF_MODEL:-haiku}"
-summary_output="$(printf '%s' "$summarizer_prompt" \
+summary_output="$(cd "$cwd" 2>/dev/null; printf '%s' "$summarizer_prompt" \
   | SESSION_HANDOFF_NO_RECURSE=1 CLAUDE_HOOK_NO_RECURSE=1 \
     handoff_timeout "$summarizer_timeout" \
     claude -p --model "$summarizer_model" --tools "" \
