@@ -27,7 +27,7 @@ umask 077
 set -uo pipefail
 
 # shellcheck source=session-log-common.sh
-. "${CLAUDE_PLUGIN_ROOT}/scripts/session-log-common.sh" 2>/dev/null || exit 0
+source "${CLAUDE_PLUGIN_ROOT}/scripts/session-log-common.sh" || exit 0
 
 # Hooks never block: without jq there is nothing this hook can build.
 command -v jq >/dev/null 2>&1 || exit 0
