@@ -619,17 +619,17 @@ scrub_is() { # $1 = input line, $2 = expected output line, $3 = label
   got="$(printf '%s\n' "$1" | handoff_scrub)"
   [ "$got" = "$2" ] && ok "$3" || bad "$3 (got: $got)"
 }
-scrub_is 'key sk-ant-api03-AbCdEf1234567890XyZ_qwerty' 'key [REDACTED]' \
+scrub_is 'key sk-ant-api03-EXAMPLEEXAMPLEEXAMPLE' 'key [REDACTED]' \
   "scrub: Anthropic sk-ant key"
 scrub_is 'openai sk-proj-abcdefghijklmnopqrstuvwx' 'openai [REDACTED]' \
   "scrub: generic sk- key"
 scrub_is 'id AKIAIOSFODNN7EXAMPLE end' 'id [REDACTED] end' \
   "scrub: AWS access key id"
-scrub_is 'use ghp_abcdefghijklmnopqrstuvwxyz0123' 'use [REDACTED]' \
+scrub_is 'use ghp_EXAMPLEEXAMPLEEXAMPLE0123' 'use [REDACTED]' \
   "scrub: GitHub ghp_ token"
-scrub_is 'use github_pat_11ABCDEFG0123456789_abcdefghijklmnop' 'use [REDACTED]' \
+scrub_is 'use github_pat_EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitHub fine-grained github_pat_ token"
-scrub_is 'use glpat-abcdefghijklmnopqrst12' 'use [REDACTED]' \
+scrub_is 'use glpat-EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitLab glpat- token"
 scrub_is 'Authorization: Bearer abc.def-ghi_123=' 'Authorization: Bearer [REDACTED]' \
   "scrub: Bearer token"
@@ -665,9 +665,9 @@ scrub_is 'token ghu_abcdefghijklmnopqrstuvwxyz0123 and gho_abcdefghijklmnopqrstu
   'token [REDACTED] and [REDACTED]' "scrub: GitHub gh[pousr]_ token prefixes"
 scrub_is 'key AKIAIOSFODNN7EXAMPLE and ASIAIOSFODNN7EXAMPLE' 'key [REDACTED] and [REDACTED]' \
   "scrub: AWS AKIA and ASIA key ids"
-scrub_is 'slack xoxb-1234567890-abcdefghij' 'slack [REDACTED]' "scrub: Slack xox token"
-scrub_is 'maps AIzaSyDUMMYKEY0123456789abcdefghijklmno' 'maps [REDACTED]' "scrub: Google AIza key"
-scrub_is 'stripe sk_live_abcdefghijklmnop1234' 'stripe [REDACTED]' "scrub: Stripe sk_live_ key"
+scrub_is 'slack xoxb-EXAMPLE-EXAMPLE' 'slack [REDACTED]' "scrub: Slack xox token"
+scrub_is 'maps AIzaEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE' 'maps [REDACTED]' "scrub: Google AIza key"
+scrub_is 'stripe sk_live_EXAMPLEEXAMPLE' 'stripe [REDACTED]' "scrub: Stripe sk_live_ key"
 scrub_is 'stripe sk_test_abcdefghijklmnop1234' 'stripe [REDACTED]' "scrub: Stripe sk_test_ key"
 
 pem_in="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAabc\n-----END RSA PRIVATE KEY-----\nafter')"
@@ -823,7 +823,7 @@ mkdir -p "$e2e"
 handoff_slugs "$e2e"
 edir="$HOME/.claude/session-log/$HANDOFF_SLUG"
 : > "$tmp/t-E2E.jsonl"
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"MARKER-E2E deploy with key sk-ant-api03-ABCDEFGHIJKLMNOP0123456789xyz"}]}}' >> "$tmp/t-E2E.jsonl"
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"MARKER-E2E deploy with key sk-ant-api03-EXAMPLEEXAMPLEEXAMPLE"}]}}' >> "$tmp/t-E2E.jsonl"
 printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"password: hunter2hunter2 and more text"}]}}' >> "$tmp/t-E2E.jsonl"
 i=0; while [ "$i" -lt 6 ]; do
   printf '%s\n' "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\",\"id\":\"e$i\",\"input\":{}}]}}" >> "$tmp/t-E2E.jsonl"
@@ -832,7 +832,7 @@ done
 printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"text","text":"done"}]}}' >> "$tmp/t-E2E.jsonl"
 printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-E2E"}' "$tmp/t-E2E.jsonl" "$e2e" \
   | "$HOOK" >/dev/null 2>&1
-if [ -s "$prompt_log" ] && ! grep -q 'ABCDEFGHIJKLMNOP' "$prompt_log" \
+if [ -s "$prompt_log" ] && ! grep -q 'EXAMPLEEXAMPLEEXAMPLE' "$prompt_log" \
   && ! grep -q 'hunter2hunter2' "$prompt_log" && grep -q '\[REDACTED\]' "$prompt_log" \
   && grep -q 'MARKER-E2E' "$prompt_log"; then
   ok "end-to-end: planted secrets absent from the summarizer prompt"
