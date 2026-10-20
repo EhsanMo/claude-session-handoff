@@ -77,9 +77,7 @@ retire_older() { # $1 = mtime of the claimed handoff, $2 = its path
     od="$(handoff_sha1 "$file")"
     [ -n "$od" ] || continue
     grep -qxF "$od" "$consumed" 2>/dev/null || printf '%s\n' "$od" >> "$consumed" 2>/dev/null
-  done <<CAND
-$candidates
-CAND
+  done <<< "$candidates"
 }
 
 # One line per handoff that is still pending for this repo, newest first. Must
@@ -114,9 +112,7 @@ pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
     printf -- '- %s  [%s]\n  %s\n  %s\n' \
       "${closed:-date unknown}" "${branch:-no branch}" "${summary:-(no summary)}" \
       "$shown"
-  done <<CAND
-$candidates
-CAND
+  done <<< "$candidates"
 }
 
 # Pick the newest unclaimed handoff and emit it. Reading a ledger and appending
@@ -198,9 +194,7 @@ while [ "${context%$'\n'}" != "$context" ]; do context="${context%$'\n'}"; done
 
     printf '%s' "$json"
     return 0
-  done <<CAND
-$candidates
-CAND
+  done <<< "$candidates"
   return 1
 }
 

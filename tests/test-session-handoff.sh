@@ -633,9 +633,9 @@ scrub_is 'use glpat-EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitLab glpat- token"
 scrub_is 'Authorization: Bearer abc.def-ghi_123=' 'Authorization: Bearer [REDACTED]' \
   "scrub: Bearer token"
-scrub_is 'jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U end' \
+scrub_is 'jwt eyJEXAMPLE.eyJEXAMPLE.EXAMPLE end' \
   'jwt [REDACTED] end' "scrub: JWT"
-scrub_is 'password=hunter2hunter2' 'password=[REDACTED]' \
+scrub_is 'password=EXAMPLEEXAMPLE' 'password=[REDACTED]' \
   "scrub: password=value"
 scrub_is '{"api_key": "abc123xyz"}' '{"api_key": "[REDACTED]"}' \
   "scrub: JSON api_key value"
@@ -657,11 +657,11 @@ scrub_is '"password": "correct horse battery"' '"password": "[REDACTED]"' \
   "scrub: quoted value redacted up to the closing quote"
 scrub_is "'token': 'abc def'" "'token': '[REDACTED]'" \
   "scrub: single-quoted value redacted up to the closing quote"
-scrub_is 'postgres://alice:s3cret@db.example:5432/app' 'postgres://[REDACTED]@db.example:5432/app' \
+scrub_is 'postgres://alice:EXAMPLE@db.example:5432/app' 'postgres://[REDACTED]@db.example:5432/app' \
   "scrub: scheme://user:pass@ userinfo"
-scrub_is 'Authorization: Basic dXNlcjpwYXNzd29yZA==' 'Authorization: Basic [REDACTED]' \
+scrub_is 'Authorization: Basic RVhBTVBMRUVYQU1QTEU=' 'Authorization: Basic [REDACTED]' \
   "scrub: Basic auth token"
-scrub_is 'token ghu_abcdefghijklmnopqrstuvwxyz0123 and gho_abcdefghijklmnopqrstuvwxyz0123' \
+scrub_is 'token ghu_EXAMPLEEXAMPLEEXAMPLE0123 and gho_EXAMPLEEXAMPLEEXAMPLE0123' \
   'token [REDACTED] and [REDACTED]' "scrub: GitHub gh[pousr]_ token prefixes"
 scrub_is 'key AKIAIOSFODNN7EXAMPLE and ASIAIOSFODNN7EXAMPLE' 'key [REDACTED] and [REDACTED]' \
   "scrub: AWS AKIA and ASIA key ids"
@@ -670,13 +670,13 @@ scrub_is 'maps AIzaEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE' 'maps [REDACTED]' "scrub
 scrub_is 'stripe sk_live_EXAMPLEEXAMPLE' 'stripe [REDACTED]' "scrub: Stripe sk_live_ key"
 scrub_is 'stripe sk_test_abcdefghijklmnop1234' 'stripe [REDACTED]' "scrub: Stripe sk_test_ key"
 
-pem_in="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAabc\n-----END RSA PRIVATE KEY-----\nafter')"
+pem_in="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nEXAMPLEEXAMPLE\n-----END RSA PRIVATE KEY-----\nafter')"
 pem_want="$(printf 'before\n[REDACTED]\nafter')"
 pem_got="$(printf '%s\n' "$pem_in" | handoff_scrub)"
 [ "$pem_got" = "$pem_want" ] && ok "scrub: multi-line PEM private key block" \
   || bad "scrub: multi-line PEM private key block (got: $pem_got)"
 
-pem_open="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAabc\nmore key\n')"
+pem_open="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nEXAMPLEEXAMPLE\nmore key\n')"
 pem_open_want="$(printf 'before\n[REDACTED]')"
 pem_open_got="$(printf '%s\n' "$pem_open" | handoff_scrub)"
 [ "$pem_open_got" = "$pem_open_want" ] && ok "scrub: unterminated PEM redacted to EOF" \
@@ -824,7 +824,7 @@ handoff_slugs "$e2e"
 edir="$HOME/.claude/session-log/$HANDOFF_SLUG"
 : > "$tmp/t-E2E.jsonl"
 printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"MARKER-E2E deploy with key sk-ant-api03-EXAMPLEEXAMPLEEXAMPLE"}]}}' >> "$tmp/t-E2E.jsonl"
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"password: hunter2hunter2 and more text"}]}}' >> "$tmp/t-E2E.jsonl"
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"password: EXAMPLEEXAMPLE and more text"}]}}' >> "$tmp/t-E2E.jsonl"
 i=0; while [ "$i" -lt 6 ]; do
   printf '%s\n' "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\",\"id\":\"e$i\",\"input\":{}}]}}" >> "$tmp/t-E2E.jsonl"
   i=$((i+1))
@@ -833,7 +833,7 @@ printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"text","text":"
 printf '{"transcript_path":"%s","cwd":"%s","session_id":"sess-E2E"}' "$tmp/t-E2E.jsonl" "$e2e" \
   | "$HOOK" >/dev/null 2>&1
 if [ -s "$prompt_log" ] && ! grep -q 'EXAMPLEEXAMPLEEXAMPLE' "$prompt_log" \
-  && ! grep -q 'hunter2hunter2' "$prompt_log" && grep -q '\[REDACTED\]' "$prompt_log" \
+  && ! grep -q 'EXAMPLEEXAMPLE' "$prompt_log" && grep -q '\[REDACTED\]' "$prompt_log" \
   && grep -q 'MARKER-E2E' "$prompt_log"; then
   ok "end-to-end: planted secrets absent from the summarizer prompt"
 else
@@ -847,7 +847,7 @@ pem_open="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nkeep one\nkeep two'
   || bad "scrub: unterminated BEGIN redacts following lines (got: $pem_open)"
 
 # A BEGIN/END pair inside one prose line redacts only the key span.
-scrub_is 'see -----BEGIN RSA PRIVATE KEY-----MIIEabc-----END RSA PRIVATE KEY----- for details' \
+scrub_is 'see -----BEGIN RSA PRIVATE KEY-----EXAMPLE-----END RSA PRIVATE KEY----- for details' \
   'see [REDACTED] for details' "scrub: same-line PEM pair keeps surrounding prose"
 
 # An excerpt that is nothing but a PEM block scrubs down to one [REDACTED] line,
