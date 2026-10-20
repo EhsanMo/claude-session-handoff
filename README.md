@@ -110,6 +110,41 @@ path, then `@<branch>`. The hash keeps `foo-bar` and `foo/bar` apart, and the ca
 keeps the folder name well inside the filesystem's 255-byte limit. Two checkouts
 with the same folder name do not share handoffs.
 
+## Performance
+
+Measured on a Linux x86_64 workstation (kernel 6.8, Claude Code 2.1.300) on
+2026-10-20. Both hook scripts were run directly with the hook's stdin JSON, and
+each timing is wall-clock (`date +%s.%N`). Every case ran 3 times and the median
+is shown. The summarizer case is a real `claude -p --model haiku` call, so its
+time is mostly network and API latency. The numbers are indicative, not a
+benchmark.
+
+| Case | Median of 3 |
+|---|---|
+| SessionEnd, real summarizer, ~20 KB transcript | 9.1 s |
+| SessionEnd, real summarizer, ~200 KB transcript | 9.9 s |
+| SessionEnd, real summarizer, ~2 MB transcript | 9.4 s |
+| SessionEnd, skipped by the tool-call gate (2 tool calls) | 0.04 s |
+| SessionStart, a handoff is pending | 0.04 s |
+| SessionStart, none pending | 0.02 s |
+| Test suite (`bash tests/test-session-handoff.sh`) | 21.1 s, 117 ok, 0 failed |
+
+- **Summarizer input is capped.** `SESSION_HANDOFF_EXCERPT_BYTES` defaults to
+  14000 and keeps the tail of the transcript text. All three transcript sizes
+  were sent as the same excerpt (about 14 KB plus the omission marker), so the
+  summarizer's cost does not grow past the cap. Even the 20 KB transcript
+  exceeded it once tool payloads were stripped.
+- **Injected context.** A typical note of 621 bytes becomes 1,123 bytes of
+  `additionalContext` once the framing is added, about 280 tokens (bytes / 4).
+- **Extra cost per session (estimate).** A session that passes the gate makes
+  one `claude -p` call at SessionEnd. SessionStart makes none. The captured
+  summarizer prompt was 14,626 bytes, about 3,650 input tokens (bytes / 4). Of
+  that, about 3,510 tokens are the excerpt and about 150 are the prompt template.
+  A skipped session makes no call.
+- **Timeouts.** `hooks/hooks.json` allows 10 s for SessionStart and 60 s for
+  SessionEnd. The summarizer call defaults to `SESSION_HANDOFF_SUMMARY_TIMEOUT`
+  (45 s) and is clamped to 50 s, inside the SessionEnd limit.
+
 ## Privacy
 
 - Transcript text from each session is sent to the Claude model, through a
