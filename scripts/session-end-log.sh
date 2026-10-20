@@ -93,13 +93,13 @@ lock_file="$log_dir/${project_slug}/.lock"
 hdr_cwd="$(printf '%s' "$cwd" | tr -d '\r\n' | sed 's/-->/--\&gt;/g')"
 hdr_session="$(printf '%s' "$session_id" | tr -d '\r\n' | sed 's/-->/--\&gt;/g')"
 hdr_branch="$(printf '%s' "${branch:-(none)}" | tr -d '\r\n' | sed 's/-->/--\&gt;/g')"
-session_header="$(cat <<EOF
+IFS= read -r -d '' session_header <<EOF || true
 <!-- session: $hdr_session -->
 <!-- branch: $hdr_branch -->
 <!-- cwd: $hdr_cwd -->
 <!-- closed: $timestamp -->
 EOF
-)"
+session_header="${session_header%$'\n'}"
 
 # Where the start hook recorded the handoff it served this session, if any.
 # Claiming is destructive (the note is marked consumed and every older one
@@ -180,7 +180,7 @@ fi
 # already stripped above.
 transcript_delim="=====TRANSCRIPT-$$-${RANDOM}====="
 
-summarizer_prompt="$(cat <<EOF
+IFS= read -r -d '' summarizer_prompt <<EOF || true
 You will be shown the user/assistant text of a Claude Code session (tool calls
 stripped). Produce exactly two sections in this format, nothing else:
 
@@ -196,7 +196,7 @@ $transcript_delim
 $transcript_excerpt
 $transcript_delim
 EOF
-)"
+summarizer_prompt="${summarizer_prompt%$'\n'}"
 
 # Hard-bound the model call: SessionEnd also fires on /clear, so an unbounded
 # summarizer would stall the next session until the harness timeout fires.

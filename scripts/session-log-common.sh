@@ -180,7 +180,7 @@ handoff_scrub() { # stdin -> stdout
   # caught. `Tests passed: 14` is left alone because `ed` is not in that list;
   # `bypass=on` is redacted too, which is accepted over-redaction.
   kw='(([Pp][Aa][Ss][Ss]([Pp][Hh][Rr][Aa][Ss][Ee]|[Cc][Oo][Dd][Ee])?(_[A-Za-z0-9_]*)?)|([Pp][Aa][Ss][Ss]([Ww][Oo][Rr][Dd]|[Ww][Dd])|[Pp][Ww][Dd]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Kk][Ee][Nn]|[Aa][Pp][Ii][-_]?[Kk][Ee][Yy]|[Cc][Rr][Ee][Dd][Ee][Nn][Tt][Ii][Aa][Ll][Ss]?|[Pp][Rr][Ii][Vv][Aa][Tt][Ee][-_]?[Kk][Ee][Yy])[A-Za-z0-9_]*)'
-  script="$(cat <<'SED'
+  IFS= read -r -d '' script <<'SED' || true
 s#(^|[^A-Za-z0-9])sk-(ant-)?[A-Za-z0-9_-]{20,}#\1[REDACTED]#g
 s#(^|[^A-Za-z0-9])sk_(live|test)_[A-Za-z0-9]{10,}#\1[REDACTED]#g
 s#(AKIA|ASIA)[0-9A-Z]{16}#[REDACTED]#g
@@ -200,7 +200,7 @@ s#(@KW@"?[[:space:]]*[=:][[:space:]]*")[^"]*#\1[REDACTED]#g
 s#(@KW@'?[[:space:]]*[=:][[:space:]]*')[^']*#\1[REDACTED]#g
 s#(@KW@"?[[:space:]]*[=:][[:space:]]*)[^[:space:]"',;}]+#\1[REDACTED]#g
 SED
-)"
+  script="${script%$'\n'}"
   script="${script//@KW@/$kw}"
   # Multi-line PEM blocks need state across lines, which sed cannot hold
   # without eating to EOF on an unterminated BEGIN. awk buffers from a BEGIN
