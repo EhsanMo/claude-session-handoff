@@ -144,7 +144,7 @@ handoff_with_lock() {
     mt="$(handoff_mtime "$dir")"
     # Renaming first means only one waiter can reclaim a given stale dir; the
     # others find it already gone and mv fails.
-    if [ -n "$mt" ] && awk -v a="$mt" -v b="$(date +%s)" 'BEGIN { exit !(b - a > 60) }'; then
+    if [ -n "$mt" ] && [ $(( $(date +%s) - ${mt%%.*} )) -gt 60 ]; then
       mv "$dir" "$dir.stale.$$" 2>/dev/null && rmdir "$dir.stale.$$" 2>/dev/null
     fi
     sleep 0.1
@@ -165,6 +165,20 @@ handoff_with_lock() {
 # wrapper that marks it as a note.
 strip_note_tags() { # stdin -> stdout
   sed -e 's#<handoff-note>##g' -e 's#</handoff-note>##g'
+}
+
+# True when mtime $1 is strictly older than mtime $2. Mtimes are whole seconds
+# or seconds.fraction (GNU %T@), so compare the two parts as integers.
+handoff_older() { # $1 < $2
+  local ai="${1%%.*}" bi="${2%%.*}" af="" bf=""
+  ai="${ai:-0}"; bi="${bi:-0}"
+  case "$1" in *.*) af="${1#*.}" ;; esac
+  case "$2" in *.*) bf="${2#*.}" ;; esac
+  af="${af}000000000"; af="${af:0:9}"
+  bf="${bf}000000000"; bf="${bf:0:9}"
+  [ "$ai" -lt "$bi" ] && return 0
+  [ "$ai" -gt "$bi" ] && return 1
+  [ $((10#$af)) -lt $((10#$bf)) ]
 }
 
 # Best-effort redaction of credential-shaped text, applied to the transcript
@@ -206,13 +220,5 @@ SED
   # without eating to EOF on an unterminated BEGIN. awk buffers from a BEGIN
   # line and prints [REDACTED] only when the matching END arrives. A BEGIN with
   # no END is redacted to EOF: failing closed beats printing a key.
-  sed -E -e "$script" | awk '
-    /-----BEGIN [A-Z ]*PRIVATE KEY( BLOCK)?-----/ && !inkey { inkey = 1 }
-    inkey {
-      if ($0 ~ /-----END [A-Z ]*PRIVATE KEY( BLOCK)?-----/) { print "[REDACTED]"; inkey = 0 }
-      next
-    }
-    { print }
-    END { if (inkey) print "[REDACTED]" }
-  '
+  sed -E -e "$script" | awk -f "${CLAUDE_PLUGIN_ROOT}/scripts/redact-pem.awk"
 }

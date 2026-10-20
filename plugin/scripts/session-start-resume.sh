@@ -71,7 +71,7 @@ retire_older() { # $1 = mtime of the claimed handoff, $2 = its path
   while IFS="$(printf '\t')" read -r ts file; do
     [ -n "$file" ] || continue
     [ "$file" = "$2" ] && continue
-    awk -v a="$ts" -v b="$1" 'BEGIN { exit !(a < b) }' || continue
+    handoff_older "$ts" "$1" || continue
     dir="$(dirname "$file")"
     consumed="$dir/.consumed"
     od="$(handoff_sha1 "$file")"
@@ -94,7 +94,7 @@ pending_lines() { # $1 = mtime of the claimed handoff, $2 = its path
     # that closed alongside this one and is still owed to someone. It is not
     # backlog, and listing it as "being retired" would be wrong: the next
     # session gets served it in full.
-    awk -v a="$ts" -v b="$1" 'BEGIN { exit !(a < b) }' || continue
+    handoff_older "$ts" "$1" || continue
     dir="$(dirname "$file")"
     od="$(handoff_sha1 "$file")"
     [ -n "$od" ] || continue
