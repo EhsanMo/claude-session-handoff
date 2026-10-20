@@ -168,10 +168,10 @@ while [ "${context%$'\n'}" != "$context" ]; do context="${context%$'\n'}"; done
     # Build the payload BEFORE recording the digest: a jq that is missing or
     # broken would otherwise mark the handoff consumed and emit nothing,
     # losing it permanently.
-    json="$(printf '%s' "$context" | jq -Rs '{
+    json="$(jq -n --arg ctx "$context" '{
       hookSpecificOutput: {
         hookEventName: "SessionStart",
-        additionalContext: .
+        additionalContext: $ctx
       }
     }' 2>/dev/null)"
     [ -n "$json" ] || return 1
