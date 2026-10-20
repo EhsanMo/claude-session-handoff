@@ -84,15 +84,18 @@ else
   esac
 fi
 
-# timeout is GNU coreutils; macOS users typically have gtimeout (coreutils via
-# Homebrew). With neither, a pure-bash watcher enforces the same bound.
-handoff_timeout() { # $1 = seconds, rest = command (stdin is passed through)
-  local secs="$1" pid watcher rc
-  shift
+# Runs the nested summarizer with a hard time bound. timeout is GNU coreutils;
+# macOS users typically have gtimeout (coreutils via Homebrew). With neither, a
+# pure-bash watcher enforces the same bound. The command is spelled out here
+# rather than passed in, so every command this plugin runs is a literal one.
+handoff_summarize() { # $1 = seconds, $2 = model; stdin is the prompt, stdout the reply
+  local secs="$1" model="$2" pid watcher rc
   if command -v timeout >/dev/null 2>&1; then
-    timeout "$secs" "$@"
+    timeout "$secs" claude -p --model "$model" --tools "" \
+      --strict-mcp-config --no-session-persistence
   elif command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "$secs" "$@"
+    gtimeout "$secs" claude -p --model "$model" --tools "" \
+      --strict-mcp-config --no-session-persistence
   else
     # Job control is switched on for this one spawn so the command gets its own
     # process group. The watcher then signals the whole group, not just the
@@ -103,7 +106,8 @@ handoff_timeout() { # $1 = seconds, rest = command (stdin is passed through)
     local had_monitor=0
     case $- in *m*) had_monitor=1 ;; esac
     set -m
-    "$@" 0<&0 &
+    claude -p --model "$model" --tools "" \
+      --strict-mcp-config --no-session-persistence 0<&0 &
     pid=$!
     [ "$had_monitor" = 1 ] || set +m
     # The watcher's output goes to /dev/null so its orphaned sleep, which
@@ -119,19 +123,19 @@ handoff_timeout() { # $1 = seconds, rest = command (stdin is passed through)
 }
 
 # Runs a command under a bounded wait for the shared lock file $1 (flock), or a
-# mkdir lock beside it when flock is missing. $2 = seconds to wait, rest = the
-# command. The wait is bounded and the command runs even if the lock was not
-# won: a stale lock must never block session start or close.
+# mkdir lock beside it when flock is missing. $2 = seconds to wait. The
+# critical section is the caller's handoff_critical function, which it defines
+# before calling. The wait is bounded and the section runs even if the lock was
+# not won: a stale lock must never block session start or close.
 handoff_with_lock() {
   local lock="$1" secs="$2" dir tries got=0 mt prev=""
-  shift 2
   if command -v flock >/dev/null 2>&1; then
     # A lock file that cannot be opened (read-only folder, a directory in its
     # place) must not cost the command: run it unlocked, as the mkdir path does.
     if ( exec 9>"$lock" ) 2>/dev/null; then
-      ( flock -w "$secs" 9 2>/dev/null || true; "$@" ) 9>"$lock"
+      ( flock -w "$secs" 9 2>/dev/null || true; handoff_critical ) 9>"$lock"
     else
-      "$@"
+      handoff_critical
     fi
     return 0
   fi
@@ -156,7 +160,7 @@ handoff_with_lock() {
     prev="$(trap -p EXIT)"
     trap 'rmdir "$dir" 2>/dev/null' EXIT
   fi
-  "$@"
+  handoff_critical
   if [ "$got" = 1 ]; then eval "${prev:-trap - EXIT}"; rmdir "$dir" 2>/dev/null; fi
   return 0
 }

@@ -215,9 +215,9 @@ trim_consumed() {
 }
 # Claim and trim share one critical section, so the start hook takes the lock
 # once. Two separate waits could together exceed the hook's timeout.
-start_locked() { claim_and_emit; trim_consumed; }
+handoff_critical() { claim_and_emit; trim_consumed; }
 start_lock="$log_dir/.start-$HANDOFF_PATH_SLUG.lock"
-handoff_with_lock "$start_lock" 5 start_locked
+handoff_with_lock "$start_lock" 5
 
 # Markers for sessions that never reached their SessionEnd (a crash, a killed
 # terminal) would otherwise accumulate forever.

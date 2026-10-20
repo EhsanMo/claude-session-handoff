@@ -918,9 +918,8 @@ for c in bash sh mkdir rmdir sleep awk date find stat cut tr sed tail cat rm mv 
   p="$(command -v "$c" 2>/dev/null || true)"
   [ -n "$p" ] && ln -sf "$p" "$nof/$c"
 done
-die() { exit 0; }
 L="$tmp/lock-trap"
-( trap - EXIT; PATH="$nof"; . "$SCRIPTS/session-log-common.sh"; handoff_with_lock "$L" 2 die ) >/dev/null 2>&1
+( trap - EXIT; PATH="$nof"; . "$SCRIPTS/session-log-common.sh"; handoff_critical() { exit 0; }; handoff_with_lock "$L" 2 ) >/dev/null 2>&1
 [ ! -d "$L.d" ] && ok "mkdir lock released when the command exits the shell" \
   || bad "mkdir lock released when the command exits the shell"
 
@@ -930,7 +929,7 @@ S="$tmp/lock-stale"
 mkdir "$S.d"
 stamp '2020-01-01 00:00:00' "$S.d"
 t0="$(date +%s)"
-( trap - EXIT; PATH="$nof"; . "$SCRIPTS/session-log-common.sh"; handoff_with_lock "$S" 5 true ) >/dev/null 2>&1
+( trap - EXIT; PATH="$nof"; . "$SCRIPTS/session-log-common.sh"; handoff_critical() { :; }; handoff_with_lock "$S" 5 ) >/dev/null 2>&1
 el=$(( $(date +%s) - t0 ))
 [ "$el" -le 2 ] && [ ! -d "$S.d" ] && ! ls -d "$S.d.stale."* >/dev/null 2>&1 \
   && ok "stale mkdir lock reclaimed (${el}s)" \
@@ -940,7 +939,7 @@ el=$(( $(date +%s) - t0 ))
 if command -v flock >/dev/null 2>&1; then
   B="$tmp/lock-blocked"
   mkdir "$B"
-  ( . "$SCRIPTS/session-log-common.sh"; handoff_with_lock "$B" 1 touch "$tmp/ran-unlocked" ) >/dev/null 2>&1
+  ( . "$SCRIPTS/session-log-common.sh"; handoff_critical() { touch "$tmp/ran-unlocked"; }; handoff_with_lock "$B" 1 ) >/dev/null 2>&1
   [ -e "$tmp/ran-unlocked" ] && ok "unopenable lock file: command still runs" \
     || bad "unopenable lock file: command still runs"
 else
@@ -1056,7 +1055,8 @@ fi
 cat > "$tmp/trapcheck.sh" <<TC
 trap 'echo CALLER_TRAP' EXIT
 . "$SCRIPTS/session-log-common.sh"
-handoff_with_lock "$tmp/lock-keep" 2 true
+handoff_critical() { :; }
+handoff_with_lock "$tmp/lock-keep" 2
 trap -p EXIT
 TC
 tout="$(PATH="$nof" "$nof/bash" "$tmp/trapcheck.sh" 2>/dev/null)"

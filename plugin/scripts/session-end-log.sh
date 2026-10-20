@@ -209,9 +209,7 @@ case "$summarizer_timeout" in ''|*[!0-9]*) summarizer_timeout=45;; esac
 summarizer_model="${SESSION_HANDOFF_MODEL:-haiku}"
 summary_output="$(cd "$cwd" 2>/dev/null; printf '%s' "$summarizer_prompt" \
   | SESSION_HANDOFF_NO_RECURSE=1 CLAUDE_HOOK_NO_RECURSE=1 \
-    handoff_timeout "$summarizer_timeout" \
-    claude -p --model "$summarizer_model" --tools "" \
-      --strict-mcp-config --no-session-persistence 2>/dev/null)"
+    handoff_summarize "$summarizer_timeout" "$summarizer_model" 2>/dev/null)"
 # A failed or timed-out summarizer must not swallow a claimed note either.
 [ -n "$summary_output" ] || { carry_claim_forward; clear_claim; exit 0; }
 
@@ -233,7 +231,7 @@ if {
   clear_claim
 fi
 
-write_global_log() {
+handoff_critical() {
   {
     echo ""
     echo "## $timestamp — session $hdr_session"
@@ -252,7 +250,7 @@ write_global_log() {
 # Serialize the shared-file writes; two sessions closing at once in the same
 # folder would otherwise interleave appends and clobber NEXT_PROMPT.md. Short
 # wait on purpose: the critical section is microseconds.
-handoff_with_lock "$lock_file" 3 write_global_log
+handoff_with_lock "$lock_file" 3
 
 # Keep the per-session files from growing without bound (newest 20 kept).
 ls -1t "$log_dir/${project_slug}"/*.md 2>/dev/null \
@@ -269,7 +267,7 @@ if [ -n "$repo_root" ] && [ -n "${SESSION_HANDOFF_KEY_LOG_REGEX:-}" ]; then
     | grep -oE "^(${SESSION_HANDOFF_KEY_LOG_REGEX})" 2>/dev/null \
     | head -1 | tr -d '\n' | tr -c 'A-Za-z0-9_.-' '_')"
   if [ -n "$key" ]; then
-    write_key_log() {
+    handoff_critical() {
       {
         echo ""
         echo "## $date_only — session $hdr_session ($repo_root)"
@@ -277,7 +275,7 @@ if [ -n "$repo_root" ] && [ -n "${SESSION_HANDOFF_KEY_LOG_REGEX:-}" ]; then
       } >> "$log_dir/decisions/${key}.md" 2>/dev/null
     }
     mkdir -p "$log_dir/decisions" 2>/dev/null \
-      && handoff_with_lock "$log_dir/decisions/.lock" 3 write_key_log
+      && handoff_with_lock "$log_dir/decisions/.lock" 3
   fi
 fi
 
