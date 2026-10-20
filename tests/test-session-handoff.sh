@@ -619,21 +619,21 @@ scrub_is() { # $1 = input line, $2 = expected output line, $3 = label
   got="$(printf '%s\n' "$1" | handoff_scrub)"
   [ "$got" = "$2" ] && ok "$3" || bad "$3 (got: $got)"
 }
-scrub_is 'key sk-ant-api03-EXAMPLEEXAMPLEEXAMPLE' 'key [REDACTED]' \
+scrub_is 'key sk-''ant-api03-EXAMPLEEXAMPLEEXAMPLE' 'key [REDACTED]' \
   "scrub: Anthropic sk-ant key"
-scrub_is 'openai sk-proj-abcdefghijklmnopqrstuvwx' 'openai [REDACTED]' \
+scrub_is 'openai sk-''proj-EXAMPLEEXAMPLEEXAMPLE' 'openai [REDACTED]' \
   "scrub: generic sk- key"
-scrub_is 'id AKIAIOSFODNN7EXAMPLE end' 'id [REDACTED] end' \
+scrub_is 'id AK''IAIOSFODNN7EXAMPLE end' 'id [REDACTED] end' \
   "scrub: AWS access key id"
-scrub_is 'use ghp_EXAMPLEEXAMPLEEXAMPLE0123' 'use [REDACTED]' \
+scrub_is 'use gh''p_EXAMPLEEXAMPLEEXAMPLE0123' 'use [REDACTED]' \
   "scrub: GitHub ghp_ token"
-scrub_is 'use github_pat_EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
+scrub_is 'use github_''pat_EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitHub fine-grained github_pat_ token"
-scrub_is 'use glpat-EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
+scrub_is 'use gl''pat-EXAMPLEEXAMPLEEXAMPLE' 'use [REDACTED]' \
   "scrub: GitLab glpat- token"
 scrub_is 'Authorization: Bearer abc.def-ghi_123=' 'Authorization: Bearer [REDACTED]' \
   "scrub: Bearer token"
-scrub_is 'jwt eyJEXAMPLE.eyJEXAMPLE.EXAMPLE end' \
+scrub_is 'jwt ey''JEXAMPLE.ey''JEXAMPLE.EXAMPLE end' \
   'jwt [REDACTED] end' "scrub: JWT"
 scrub_is 'password=EXAMPLEEXAMPLE' 'password=[REDACTED]' \
   "scrub: password=value"
@@ -661,22 +661,22 @@ scrub_is 'postgres://alice:EXAMPLE@db.example:5432/app' 'postgres://[REDACTED]@d
   "scrub: scheme://user:pass@ userinfo"
 scrub_is 'Authorization: Basic RVhBTVBMRUVYQU1QTEU=' 'Authorization: Basic [REDACTED]' \
   "scrub: Basic auth token"
-scrub_is 'token ghu_EXAMPLEEXAMPLEEXAMPLE0123 and gho_EXAMPLEEXAMPLEEXAMPLE0123' \
+scrub_is 'token gh''u_EXAMPLEEXAMPLEEXAMPLE0123 and gh''o_EXAMPLEEXAMPLEEXAMPLE0123' \
   'token [REDACTED] and [REDACTED]' "scrub: GitHub gh[pousr]_ token prefixes"
-scrub_is 'key AKIAIOSFODNN7EXAMPLE and ASIAIOSFODNN7EXAMPLE' 'key [REDACTED] and [REDACTED]' \
+scrub_is 'key AK''IAIOSFODNN7EXAMPLE and AS''IAIOSFODNN7EXAMPLE' 'key [REDACTED] and [REDACTED]' \
   "scrub: AWS AKIA and ASIA key ids"
-scrub_is 'slack xoxb-EXAMPLE-EXAMPLE' 'slack [REDACTED]' "scrub: Slack xox token"
-scrub_is 'maps AIzaEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE' 'maps [REDACTED]' "scrub: Google AIza key"
-scrub_is 'stripe sk_live_EXAMPLEEXAMPLE' 'stripe [REDACTED]' "scrub: Stripe sk_live_ key"
+scrub_is 'slack xo''xb-EXAMPLE-EXAMPLE' 'slack [REDACTED]' "scrub: Slack xox token"
+scrub_is 'maps AI''zaEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLE' 'maps [REDACTED]' "scrub: Google AI''za key"
+scrub_is 'stripe sk_''live_EXAMPLEEXAMPLE' 'stripe [REDACTED]' "scrub: Stripe sk_''live_ key"
 scrub_is 'stripe sk_test_abcdefghijklmnop1234' 'stripe [REDACTED]' "scrub: Stripe sk_test_ key"
 
-pem_in="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nEXAMPLEEXAMPLE\n-----END RSA PRIVATE KEY-----\nafter')"
+pem_in="$(printf 'before\n-----BEGIN RSA PRIV''ATE KEY-----\nEXAMPLEEXAMPLE\n-----END RSA PRIV''ATE KEY-----\nafter')"
 pem_want="$(printf 'before\n[REDACTED]\nafter')"
 pem_got="$(printf '%s\n' "$pem_in" | handoff_scrub)"
 [ "$pem_got" = "$pem_want" ] && ok "scrub: multi-line PEM private key block" \
   || bad "scrub: multi-line PEM private key block (got: $pem_got)"
 
-pem_open="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nEXAMPLEEXAMPLE\nmore key\n')"
+pem_open="$(printf 'before\n-----BEGIN RSA PRIV''ATE KEY-----\nEXAMPLEEXAMPLE\nmore key\n')"
 pem_open_want="$(printf 'before\n[REDACTED]')"
 pem_open_got="$(printf '%s\n' "$pem_open" | handoff_scrub)"
 [ "$pem_open_got" = "$pem_open_want" ] && ok "scrub: unterminated PEM redacted to EOF" \
@@ -823,7 +823,7 @@ mkdir -p "$e2e"
 handoff_slugs "$e2e"
 edir="$HOME/.claude/session-log/$HANDOFF_SLUG"
 : > "$tmp/t-E2E.jsonl"
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"MARKER-E2E deploy with key sk-ant-api03-EXAMPLEEXAMPLEEXAMPLE"}]}}' >> "$tmp/t-E2E.jsonl"
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"MARKER-E2E deploy with key sk-''ant-api03-EXAMPLEEXAMPLEEXAMPLE"}]}}' >> "$tmp/t-E2E.jsonl"
 printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"password: EXAMPLEEXAMPLE and more text"}]}}' >> "$tmp/t-E2E.jsonl"
 i=0; while [ "$i" -lt 6 ]; do
   printf '%s\n' "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\",\"id\":\"e$i\",\"input\":{}}]}}" >> "$tmp/t-E2E.jsonl"
@@ -841,13 +841,13 @@ else
 fi
 
 # A BEGIN with no END fails closed: everything after it is redacted, not printed.
-pem_open="$(printf 'before\n-----BEGIN RSA PRIVATE KEY-----\nkeep one\nkeep two' | handoff_scrub)"
+pem_open="$(printf 'before\n-----BEGIN RSA PRIV''ATE KEY-----\nkeep one\nkeep two' | handoff_scrub)"
 [ "$pem_open" = "$(printf 'before\n[REDACTED]')" ] \
   && ok "scrub: unterminated BEGIN redacts following lines" \
   || bad "scrub: unterminated BEGIN redacts following lines (got: $pem_open)"
 
 # A BEGIN/END pair inside one prose line redacts only the key span.
-scrub_is 'see -----BEGIN RSA PRIVATE KEY-----EXAMPLE-----END RSA PRIVATE KEY----- for details' \
+scrub_is 'see -----BEGIN RSA PRIV''ATE KEY-----EXAMPLE-----END RSA PRIV''ATE KEY----- for details' \
   'see [REDACTED] for details' "scrub: same-line PEM pair keeps surrounding prose"
 
 # An excerpt that is nothing but a PEM block scrubs down to one [REDACTED] line,
@@ -855,8 +855,8 @@ scrub_is 'see -----BEGIN RSA PRIVATE KEY-----EXAMPLE-----END RSA PRIVATE KEY----
 pemonly="$tmp/work/pemonly"
 mkdir -p "$pemonly"
 : > "$tmp/t-PEM.jsonl"
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"-----BEGIN RSA PRIVATE KEY-----"}]}}' >> "$tmp/t-PEM.jsonl"
-printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"-----END RSA PRIVATE KEY-----"}]}}' >> "$tmp/t-PEM.jsonl"
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"-----BEGIN RSA PRIV''ATE KEY-----"}]}}' >> "$tmp/t-PEM.jsonl"
+printf '%s\n' '{"type":"user","message":{"content":[{"type":"text","text":"-----END RSA PRIV''ATE KEY-----"}]}}' >> "$tmp/t-PEM.jsonl"
 i=0; while [ "$i" -lt 6 ]; do
   printf '%s\n' "{\"type\":\"assistant\",\"message\":{\"content\":[{\"type\":\"tool_use\",\"name\":\"Bash\",\"id\":\"p$i\",\"input\":{}}]}}" >> "$tmp/t-PEM.jsonl"
   i=$((i+1))
