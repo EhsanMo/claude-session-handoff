@@ -151,9 +151,16 @@ else
   bad "resume prompt injected at session start"
 fi
 
-# 8. The same handoff is not re-injected into every later session.
+# 8. The same handoff is not re-injected into every later session. Test 7 claimed
+#    one handoff; the next start may legitimately serve a sibling that shares its
+#    mtime (BSD stat has whole-second resolution, so parallel closes tie), so
+#    assert on the claimed handoff's own "Handoff:" line, not on empty output.
+claimed_line="$(printf '%s' "$out" | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null \
+  | grep -m1 '^Handoff: ')"
 out2="$(start_payload | "$START_HOOK" 2>/dev/null)"
-[ -z "$out2" ] && ok "same handoff injected only once" || bad "same handoff injected only once"
+out2_ctx="$(printf '%s' "$out2" | jq -r '.hookSpecificOutput.additionalContext' 2>/dev/null)"
+[ -n "$claimed_line" ] && ! printf '%s\n' "$out2_ctx" | grep -qxF "$claimed_line" \
+  && ok "same handoff injected only once" || bad "same handoff injected only once"
 
 # 9. A new close produces a new handoff, which is injected again.
 mk_transcript "$tmp/t-d.jsonl" MARKER-DDD
