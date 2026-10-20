@@ -4,14 +4,14 @@
       {
         "matcher": "startup|clear",
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session-start-resume.sh\"", "timeout": 10 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-start-resume.sh", "timeout": 10 }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session-end-log.sh\"", "timeout": 60 }
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-end-log.sh", "timeout": 60 }
         ]
       }
     ]
