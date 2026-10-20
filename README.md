@@ -206,7 +206,7 @@ benchmark.
   summarizer prompt was 14,626 bytes, about 3,650 input tokens (bytes / 4). Of
   that, about 3,510 tokens are the excerpt and about 150 are the prompt template.
   A skipped session makes no call.
-- **Timeouts.** `hooks/hooks.json` allows 10 s for SessionStart and 60 s for
+- **Timeouts.** `plugin/hooks/hooks.json` allows 10 s for SessionStart and 60 s for
   SessionEnd. The summarizer call defaults to `SESSION_HANDOFF_SUMMARY_TIMEOUT`
   (45 s) and is clamped to 50 s, inside the SessionEnd limit.
 
@@ -253,7 +253,7 @@ each session's last assistant turn, which is the window it ended with.
   SessionEnd hooks are shell scripts, and SessionEnd launches the nested
   `claude -p` call above. Plugin screens that list capabilities, such as the
   claude.ai plugin page, show this as "Can run code without asking". The scripts
-  are in `hooks/` and `scripts/` and are short enough to read before installing.
+  are in `plugin/hooks/` and `plugin/scripts/` and are short enough to read before installing.
 - Before it is sent, the transcript text is passed through best-effort regex
   scrubbing, and the summary is scrubbed again before it is written. Each
   match becomes `[REDACTED]`; line structure is kept. The rules:

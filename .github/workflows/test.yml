@@ -31,7 +31,7 @@ jobs:
           fi
 
       - name: Syntax check
-        run: for f in scripts/*.sh tests/*.sh; do bash -n "$f" || exit 1; done
+        run: for f in plugin/scripts/*.sh tests/*.sh; do bash -n "$f" || exit 1; done
 
       - name: Test suite
         run: bash tests/test-session-handoff.sh

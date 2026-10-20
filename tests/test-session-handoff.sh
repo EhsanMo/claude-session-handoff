@@ -13,7 +13,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-SCRIPTS="$HERE/../scripts"
+SCRIPTS="$HERE/../plugin/scripts"
 HOOK="$SCRIPTS/session-end-log.sh"
 START_HOOK="$SCRIPTS/session-start-resume.sh"
 tmp="$(mktemp -d)"
@@ -46,7 +46,7 @@ work="$tmp/work/myproj"
 mkdir -p "$work"
 
 # Both hooks key off this; the suite must agree with them rather than guess.
-# shellcheck source=../scripts/session-log-common.sh
+# shellcheck source=../plugin/scripts/session-log-common.sh
 . "$SCRIPTS/session-log-common.sh"
 handoff_slugs "$work"
 slug="$HANDOFF_SLUG"
